@@ -153,7 +153,7 @@ def users_show(user_id):
                 .order_by(Message.timestamp.desc())
                 .limit(100)
                 .all())
-    return render_template('users/show.html', user=user, messages=messages)
+    return render_template('users/show.html', user=user, messages=messages, logged_user=g.user)
 
 
 @app.route('/users/<int:user_id>/following')
@@ -180,22 +180,16 @@ def users_followers(user_id):
     return render_template('users/followers.html', user=user)
 
 
-# @app.route('/users/<int:user_id>/likes')
-# def users_likes(user_id):
-#     """Show list of likes of this user."""
+@app.route('/users/<int:user_id>/likes')
+def users_likes(user_id):
+    """Show list of likes of this user."""
 
-#     if not g.user:
-#         flash("Access unauthorized.", "danger")
-#         return redirect("/")
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
 
-#     g.user.likes
-#     messages = (Message
-#                 .query
-#                 .filter(Message.user_id == user_id)
-#                 .order_by(Message.timestamp.desc())
-#                 .limit(100)
-#                 .all())
-#     return render_template('users/show.html', user=user, messages=messages)
+    user = User.query.get_or_404(user_id)
+    return render_template('users/likes.html', user=user, messages=user.likes)
 
 
 @app.route('/users/follow/<int:follow_id>', methods=['POST'])
@@ -358,8 +352,7 @@ def homepage():
                     .order_by(Message.timestamp.desc())
                     .limit(100)
                     .all())
-        likes = [l.id for l in g.user.likes]
-        return render_template('home.html', messages=messages, likes=likes)
+        return render_template('home.html', messages=messages, likes=g.user.likes)
 
     else:
         return render_template('home-anon.html')
