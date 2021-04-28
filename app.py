@@ -180,6 +180,24 @@ def users_followers(user_id):
     return render_template('users/followers.html', user=user)
 
 
+# @app.route('/users/<int:user_id>/likes')
+# def users_likes(user_id):
+#     """Show list of likes of this user."""
+
+#     if not g.user:
+#         flash("Access unauthorized.", "danger")
+#         return redirect("/")
+
+#     g.user.likes
+#     messages = (Message
+#                 .query
+#                 .filter(Message.user_id == user_id)
+#                 .order_by(Message.timestamp.desc())
+#                 .limit(100)
+#                 .all())
+#     return render_template('users/show.html', user=user, messages=messages)
+
+
 @app.route('/users/follow/<int:follow_id>', methods=['POST'])
 def add_follow(follow_id):
     """Add a follow for the currently-logged-in user."""
@@ -259,15 +277,12 @@ def add_like(message_id):
     if not g.user:
         flash("Access unauthorized.", "danger")
         return redirect("/")
-    like = Likes.query.filter(
-        Likes.user_id == g.user.id, Likes.message_id == message_id).all()
-    # following_ids = [f.id for f in g.user.following]
-    if like:
-        for l in like:
-            db.session.delete(l)
+
+    msg = Message.query.get(message_id)
+    if msg in g.user.likes:
+        g.user.likes.remove(msg)
     else:
-        like = Likes(user_id=g.user.id, message_id=message_id)
-        db.session.add(like)
+        g.user.likes.append(msg)
 
     db.session.commit()
     return redirect(request.referrer)
