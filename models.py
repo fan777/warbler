@@ -47,7 +47,6 @@ class Likes(db.Model):
         db.Integer,
         db.ForeignKey('messages.id', ondelete='cascade'),
         primary_key=True
-        # unique=True  # CHARLIE -- IS THIS A PROBLEM?
     )
 
 

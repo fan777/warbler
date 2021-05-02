@@ -6,7 +6,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy import or_
 
 from forms import UserAddForm, UserEditForm, LoginForm, MessageForm
-from models import db, connect_db, User, Message, Likes
+from models import db, connect_db, User, Message
 
 CURR_USER_KEY = "curr_user"
 
@@ -65,6 +65,8 @@ def signup():
     If the there already is a user with that username: flash message
     and re-present form.
     """
+
+    do_logout()
 
     form = UserAddForm()
 
@@ -153,7 +155,7 @@ def users_show(user_id):
                 .order_by(Message.timestamp.desc())
                 .limit(100)
                 .all())
-    return render_template('users/show.html', user=user, messages=messages, logged_user=g.user)
+    return render_template('users/show.html', user=user, messages=messages, likes=user.likes)
 
 
 @app.route('/users/<int:user_id>/following')
@@ -264,7 +266,7 @@ def delete_user():
     return redirect("/signup")
 
 
-@app.route('/users/add_like/<int:message_id>', methods=['GET', 'POST'])
+@app.route('/users/<int:message_id>/like', methods=['GET', 'POST'])
 def add_like(message_id):
     '''Add like to message or remove if already liked'''
 
