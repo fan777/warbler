@@ -30,7 +30,7 @@ db.create_all()
 
 
 class UserModelTestCase(TestCase):
-    """Test views for messages."""
+    """Test model for Users."""
 
     def setUp(self):
         """Create test client, add sample data."""
@@ -38,12 +38,22 @@ class UserModelTestCase(TestCase):
         User.query.delete()
         Message.query.delete()
         Follows.query.delete()
+        
+        u1 = User.signup('test1', 'test1@test.com', 'password', None)
+        u2 = User.signup('test2', 'test2@test.com', 'password', None)
+        db.session.commit()
+
+        self.u1 = u1
+        self.u2 = u2
 
         self.client = app.test_client()
+    
+    def tearDown(self):
+        db.session.rollback()
 
     def test_user_model(self):
         """Does basic model work?"""
-
+        
         u = User(
             email="test@test.com",
             username="testuser",
@@ -56,3 +66,15 @@ class UserModelTestCase(TestCase):
         # User should have no messages & no followers
         self.assertEqual(len(u.messages), 0)
         self.assertEqual(len(u.followers), 0)
+    
+    def test_is_following(self):
+        self.u1.following.append(self.u2)
+        db.session.commit()
+        self.assertTrue(self.u1.is_following(self.u2))
+        self.assertFalse(self.u2.is_following(self.u1))
+
+    def test_is_followed_by(self):
+        self.u1.following.append(self.u2)
+        db.session.commit()
+        self.assertTrue(self.u2.is_followed_by(self.u1))
+        self.assertFalse(self.u1.is_followed_by(self.u2))
