@@ -7,6 +7,7 @@
 
 import os
 from unittest import TestCase
+from sqlalchemy.exc import IntegrityError
 
 from models import db, User, Message, Follows
 
@@ -53,7 +54,7 @@ class UserModelTestCase(TestCase):
 
     def test_user_model(self):
         """Does basic model work?"""
-        
+
         u = User(
             email="test@test.com",
             username="testuser",
@@ -78,3 +79,32 @@ class UserModelTestCase(TestCase):
         db.session.commit()
         self.assertTrue(self.u2.is_followed_by(self.u1))
         self.assertFalse(self.u1.is_followed_by(self.u2))
+
+    def test_signup(self):
+        self.assertEqual(self.u1.username, 'test1')
+        self.assertEqual(self.u1.email, 'test1@test.com')
+
+    def test_unique_username(self):
+        u_duplicate = User.signup('test1', 'test1@test.com', 'password', None)
+        self.assertRaises(IntegrityError, db.session.commit)
+    
+    def test_missing_username(self):
+        u_missing_username = User.signup(None, 'test@test.com', 'password', None)
+        self.assertRaises(IntegrityError, db.session.commit)
+    
+    def test_missing_email(self):
+        u_missing_email = User.signup('test3', None, 'password', None)
+        self.assertRaises(IntegrityError, db.session.commit)
+    
+    def test_authentication(self):
+        u = User.authenticate(self.u1.username, 'password')
+        self.assertTrue(u)
+        self.assertEqual(u.id, self.u1.id)
+    
+    def test_nonexistent_user(self):
+        u = User.authenticate('abc', 'password')
+        self.assertFalse(u)
+
+    def test_bad_password(self):
+        u = User.authenticate(self.u1.username, 'asdfasdf')
+        self.assertFalse(u)

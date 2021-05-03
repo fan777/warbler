@@ -39,20 +39,36 @@ class MessageModelTestCase(TestCase):
         Message.query.delete()
         Follows.query.delete()
 
+        u1 = User.signup('test1', 'test1@test.com', 'password', None)
+        u2 = User.signup('test2', 'test2@test.com', 'password', None)
+        db.session.commit()
+
+        self.u1 = u1
+        self.u2 = u2
+
         self.client = app.test_client()
+    
+    def tearDown(self):
+        db.session.rollback()
     
     def test_message_model(self):
         """Does basic model work?"""
 
-        u = User(
-            email="test@test.com",
-            username="testuser",
-            password="HASHED_PASSWORD"
-        )
+        m = Message(text="test@test.com", user_id=self.u1.id)
 
-        db.session.add(u)
+        db.session.add(m)
         db.session.commit()
 
-        # User should have no messages & no followers
-        self.assertEqual(len(u.messages), 0)
-        self.assertEqual(len(u.followers), 0)
+        # User should have 1 messages
+        self.assertEqual(len(self.u1.messages), 1)
+    
+    def test_message_likes(self):
+        m1 = Message(text='abcdefg', user_id=self.u1.id)
+        m2 = Message(text='hijklmn', user_id=self.u1.id)
+
+        self.u1.likes.append(m2)
+        db.session.commit()
+        
+        self.assertEqual(len(self.u1.likes), 1)
+        self.assertTrue(m2 in self.u1.likes)
+        self.assertFalse(m1 in self.u1.likes)
